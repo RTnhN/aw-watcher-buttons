@@ -10,7 +10,7 @@ from aw_core import dirs
 from aw_core.models import Event
 from aw_client.client import ActivityWatchClient
 
-from Buttons import Buttons
+from .Buttons import Buttons
 
 watcher_name = "aw-watcher-buttons"
 
