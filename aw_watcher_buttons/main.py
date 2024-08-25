@@ -73,13 +73,13 @@ def main():
                 data = {"title": title, "button": button_name}
                 print_statusline(title)
                 event = Event(timestamp=datetime.now(timezone.utc), data=data)
-                aw.heartbeat(bucketname, event, pulsetime=poll_time + 1, queued=True)
+                aw.heartbeat(bucketname, event, pulsetime=poll_time + 5, queued=True)
             else:
                 title = "No button pressed"
                 data = {"title": title, "button": "none"}
                 print_statusline(title)
                 event = Event(timestamp=datetime.now(timezone.utc), data=data)
-                aw.heartbeat(bucketname, event, pulsetime=poll_time + 1, queued=True)
+                aw.heartbeat(bucketname, event, pulsetime=poll_time + 5, queued=True)
             current_time = datetime.now()
             if state != -1:
                 if current_time.minute % 15 == 0 and current_time.second == 0:
