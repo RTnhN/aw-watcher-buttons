@@ -81,12 +81,13 @@ def main():
                 event = Event(timestamp=datetime.now(timezone.utc), data=data)
                 aw.heartbeat(bucketname, event, pulsetime=poll_time + 1, queued=True)
             current_time = datetime.now()
-            if current_time.minute % 15 == 0 and current_time.second == 0:
-                if not blinked:
-                    buttons_manager.blink_led(state, 3, 4)
-                    blinked = True
-            else:
-                blinked = False
+            if state != -1:
+                if current_time.minute % 15 == 0 and current_time.second == 0:
+                    if not blinked:
+                        buttons_manager.blink_led(state, 3, 4)
+                        blinked = True
+                else:
+                    blinked = False
 
         except Exception as e:
             print("An exception occurred: {}".format(e))
