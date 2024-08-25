@@ -2,7 +2,7 @@ import serial
 import time
 
 
-class LEDController:
+class Buttons:
     def __init__(self, port, baudrate=115200, timeout=1):
         """
         Initializes the LEDController class with the given serial port parameters.
@@ -64,10 +64,3 @@ class LEDController:
         Closes the serial connection.
         """
         self.serial.close()
-
-
-if __name__ == "__main__":
-    led_controller = LEDController("COM12")  # Adjust the port to your Arduino's port
-    print(led_controller.get_led_state())
-    led_controller.blink_led(1, 5, 3)  # Blink LED 1 with a period of 500ms, 3 times
-    led_controller.close()
