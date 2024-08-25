@@ -84,7 +84,7 @@ def main():
             if state != -1:
                 if current_time.minute % 15 == 0 and current_time.second == 0:
                     if not blinked:
-                        buttons_manager.blink_led(state, 3, 4)
+                        buttons_manager.blink_led(state, 5, 9)
                         blinked = True
                 else:
                     blinked = False
