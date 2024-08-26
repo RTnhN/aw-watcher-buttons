@@ -16,6 +16,7 @@ struct BlinkState {
   int totalBlinks = 0;              // Total number of blinks requested
   int ledState = LOW;               // Current state of the LED
   int period = 0;                   // Blinking period
+  int initialState = LOW;           // Initial state of the LED before blinking
 };
 
 BlinkState blinkStates[numButtons]; // Array to hold the blink states of each LED
@@ -74,9 +75,9 @@ void handleSerialCommand(String command) {
   } else if (command.startsWith("b")) {
     // Parse the blink command in the form of bxyz where x is the led, y is the number of 100's of ms, and z is 
     // the number of blinks up to 9 
-    int ledNumber = command.substring(1, 2).toInt();   // Extract the LED number
-    int period = command.substring(2, 3).toInt() * 100; // Extract and convert the blink period (x * 100 ms)
-    int blinks = command.substring(3).toInt();         // Extract the number of blinks (y)
+    int ledNumber = command.substring(1, 2).toInt();   // Extract the LED number x
+    int period = command.substring(2, 3).toInt() * 100; // Extract and convert the blink period (y * 100 ms)
+    int blinks = command.substring(3).toInt();         // Extract the number of blinks (z)
     if (ledNumber >= 1 && ledNumber <= numButtons) {
       blinkLED(ledNumber - 1, period, blinks); // Initiate the blink operation
     }
@@ -89,11 +90,14 @@ void turnOnLED(int ledIndex) {
   for (int i = 0; i < numButtons; i++) {
     digitalWrite(ledPins[i], LOW);
     ledStates[i] = LOW;
+    blinkStates[i].blinkCount = blinkStates[i].totalBlinks * 2; 
+    blinkStates[i].initialState = LOW; 
   }
 
   // Turn on the selected LED
   digitalWrite(ledPins[ledIndex], HIGH);
   ledStates[ledIndex] = HIGH;
+  blinkStates[ledIndex].initialState = HIGH; 
 }
 
 // Non-blocking function to blink a specific LED with a given period and number of blinks
@@ -102,7 +106,8 @@ void blinkLED(int ledIndex, int period, int blinks) {
   blinkStates[ledIndex].totalBlinks = blinks;   // Set the total number of blinks
   blinkStates[ledIndex].period = period;        // Set the blinking period
   blinkStates[ledIndex].previousMillis = millis(); // Reset the timer
-  blinkStates[ledIndex].ledState = LOW;         // Start with the LED off
+  blinkStates[ledIndex].initialState = ledStates[ledIndex]; // Save the initial state of the LED
+  blinkStates[ledIndex].ledState = ledStates[ledIndex];     // Start with the LED in its current state
 }
 
 void updateBlinkingLEDs() {
@@ -113,14 +118,19 @@ void updateBlinkingLEDs() {
       // Check if it's time to toggle the LED state
       if (currentMillis - blinkStates[i].previousMillis >= (blinkStates[i].period / 2)) {
         blinkStates[i].previousMillis = currentMillis; // Reset the timer
-        if (blinkStates[i].ledState == LOW) {
-          blinkStates[i].ledState = HIGH;
-        } else {
-          blinkStates[i].ledState = LOW;
-          blinkStates[i].blinkCount++; // Increment the blink count on off-time
-        }
+        // Toggle the LED state
+        blinkStates[i].ledState = !blinkStates[i].ledState;
         digitalWrite(ledPins[i], blinkStates[i].ledState);
+
+        // Increment the blink count after every complete blink (on and off)
+        if (blinkStates[i].ledState == blinkStates[i].initialState) {
+          blinkStates[i].blinkCount++;
+        }
       }
+    } else {
+      // Restore the LED to its initial state after blinking is complete
+      digitalWrite(ledPins[i], blinkStates[i].initialState);
+      ledStates[i] = blinkStates[i].initialState;
     }
   }
 }
