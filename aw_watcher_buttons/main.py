@@ -5,6 +5,8 @@ import logging
 import traceback
 from time import sleep
 from datetime import datetime, timezone
+import tkinter as tk
+from tkinter import simpledialog
 
 from aw_core import dirs
 from aw_core.models import Event
@@ -64,13 +66,40 @@ def main():
     aw.connect()
     buttons_manager = Buttons(port)
     blinked = False
+
+    root = tk.Tk()
+    root.withdraw()
+
+    def prompt_description(button_label):
+        root.attributes("-topmost", True)
+        root.update()
+        description_input = simpledialog.askstring(
+            "aw-watcher-buttons",
+            f"Whatcha doin with {button_label}?",
+            parent=root,
+        )
+        root.attributes("-topmost", False)
+        return description_input
+
+    previous_state = None
+    current_title = ""
+    current_description = ""
     while True:
         try:
             state = buttons_manager.get_led_state()
             if state != -1:
                 button_name = button_names[state - 1]
-                title = f"{button_name}"
+                if state != previous_state:
+                    description_input = prompt_description(button_name)
+                    description = description_input.strip() if description_input else ""
+                    current_description = description
+                    current_title = (
+                        f"{button_name}-{description}" if description else button_name
+                    )
+                title = current_title or button_name
                 data = {"title": title, "button": button_name}
+                if current_description:
+                    data["description"] = current_description
                 print_statusline(title)
                 event = Event(timestamp=datetime.now(timezone.utc), data=data)
                 aw.heartbeat(bucketname, event, pulsetime=poll_time + 5, queued=True)
@@ -78,12 +107,14 @@ def main():
                 if current_time.minute % 15 == 0 and current_time.second == 0:
                     if not blinked:
                         buttons_manager.blink_led(state, 5, 9)
-                        blinked = True
+                    blinked = True
                 else:
                     blinked = False
             else:
                 title = "No button pressed"
                 data = {"title": title, "button": "none"}
+                current_title = title
+                current_description = ""
                 print_statusline(title)
                 event = Event(timestamp=datetime.now(timezone.utc), data=data)
                 aw.heartbeat(bucketname, event, pulsetime=poll_time + 5, queued=True)
@@ -93,6 +124,7 @@ def main():
             traceback.print_exc()
             buttons_manager.close()
             sys.exit(1)
+        previous_state = state
         sleep(poll_time)
 
 
