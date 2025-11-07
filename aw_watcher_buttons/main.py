@@ -17,6 +17,7 @@ from .Buttons import Buttons
 watcher_name = "aw-watcher-buttons"
 
 logger = logging.getLogger(watcher_name)
+DESCRIPTION_TIMEOUT_SECONDS = 30
 DEFAULT_CONFIG = f"""
 [{watcher_name}]
 poll_time = 0.1
@@ -74,12 +75,32 @@ def main():
     def prompt_description(button_label):
         root.attributes("-topmost", True)
         root.update()
-        description_input = simpledialog.askstring(
-            "aw-watcher-buttons",
-            f"Whatcha doin with {button_label}?",
-            parent=root,
+
+        timeout_handle = {"id": None}
+
+        def close_if_idle():
+            timeout_handle["id"] = None
+            for child in root.winfo_children():
+                if isinstance(child, tk.Toplevel) and child.wm_title() == "aw-watcher-buttons":
+                    entry_widget = child.children.get("entry")
+                    if entry_widget is None or not entry_widget.get().strip():
+                        child.destroy()
+                    break
+
+        timeout_handle["id"] = root.after(
+            int(DESCRIPTION_TIMEOUT_SECONDS * 1000), close_if_idle
         )
-        root.attributes("-topmost", False)
+        try:
+            description_input = simpledialog.askstring(
+                "aw-watcher-buttons",
+                f"Whatcha doin with {button_label}?",
+                parent=root,
+            )
+        finally:
+            timeout_id = timeout_handle["id"]
+            if timeout_id is not None:
+                root.after_cancel(timeout_id)
+            root.attributes("-topmost", False)
         return description_input
 
     previous_state = None
