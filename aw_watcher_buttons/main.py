@@ -66,6 +66,7 @@ def main():
     aw.connect()
     buttons_manager = Buttons(port)
     blinked = False
+    device_connected = buttons_manager.is_connected()
 
     root = tk.Tk()
     root.withdraw()
@@ -87,7 +88,31 @@ def main():
     while True:
         try:
             state = buttons_manager.get_led_state()
-            if state != -1:
+            currently_connected = buttons_manager.is_connected()
+
+            if not currently_connected:
+                if device_connected:
+                    previous_state = None
+                    current_title = ""
+                    current_description = ""
+                device_connected = False
+                title = "Buttons disconnected"
+                data = {"title": title, "button": "disconnected"}
+                print_statusline(title)
+                event = Event(timestamp=datetime.now(timezone.utc), data=data)
+                aw.heartbeat(bucketname, event, pulsetime=poll_time + 5, queued=True)
+                blinked = False
+                sleep(poll_time)
+                continue
+
+            if not device_connected:
+                # Just reconnected, force a new prompt on the next button change.
+                previous_state = None
+                current_title = ""
+                current_description = ""
+                device_connected = True
+
+            if 1 <= state <= len(button_names):
                 button_name = button_names[state - 1]
                 if state != previous_state:
                     description_input = prompt_description(button_name)
