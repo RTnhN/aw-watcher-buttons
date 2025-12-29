@@ -21,7 +21,7 @@ DESCRIPTION_TIMEOUT_SECONDS = 30
 DEFAULT_CONFIG = f"""
 [{watcher_name}]
 poll_time = 0.1
-port = ""
+ports = []
 button_names = ["green", "red", "white", "blue", "yellow"]
 """
 
@@ -48,13 +48,22 @@ def main():
 
     config = load_config()
 
-    port = config[watcher_name].get("port")
-    port = None if port == "" else port
+    ports = config[watcher_name].get("ports")
+    if ports is None:
+        legacy_port = config[watcher_name].get("port")
+        legacy_port = None if legacy_port == "" else legacy_port
+        ports = [legacy_port] if legacy_port else None
+    elif isinstance(ports, str):
+        ports = [ports]
+    elif ports is not None:
+        ports = list(ports)
+    ports = [port for port in (ports or []) if port]
+
     poll_time = float(config[watcher_name].get("poll_time"))
     button_names = config[watcher_name].get("button_names")
-    if port is None or button_names is None:
+    if not ports or button_names is None:
         logger.error(
-            "Port and button names must be specified in the config file. You can find it here: {}".format(
+            "Ports and button names must be specified in the config file. You can find it here: {}".format(
                 config_dir
             )
         )
@@ -65,7 +74,7 @@ def main():
     if aw.get_buckets().get(bucketname) == None:
         aw.create_bucket(bucketname, event_type="Button", queued=True)
     aw.connect()
-    buttons_manager = Buttons(port)
+    buttons_manager = Buttons(ports)
     blinked = False
     device_connected = buttons_manager.is_connected()
 
