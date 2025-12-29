@@ -10,21 +10,25 @@ This watcher is currently in a early stage of development, please submit PRs if 
 
 ## Usage
 
+### Step 1: Install the watcher with uv
 
-### Step 1: Install package
-
-Install the requirements:
+Install [uv](https://github.com/astral-sh/uv) if you do not already have it, then from this repository run:
 
 ```sh
-pip install .
+uv tool install .
 ```
 
-First run (generates config):
+This makes `aw-watcher-buttons` available on your PATH for all shells. To upgrade later, run `uv tool install --force .`.
+
+### Step 2: First run (generates config)
+
 ```sh
-python aw-watcher-buttons/main.py
+aw-watcher-buttons
 ```
 
-### Step 2: Restart the server and enable the watcher
+This creates the config file (see the path in the log output). Update the `ports` and `button_names` entries as needed for your setup.
+
+### Step 3: Restart the server and enable the watcher
 
 
 
