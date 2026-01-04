@@ -23,6 +23,7 @@ DEFAULT_CONFIG = f"""
 poll_time = 0.1
 ports = []
 button_names = ["green", "red", "white", "blue", "yellow"]
+button_colors = ["#00ff00", "#ff0000", "#eeeeee", "#0000ff", "#ffff00"]
 """
 
 
@@ -61,7 +62,8 @@ def main():
 
     poll_time = float(config[watcher_name].get("poll_time"))
     button_names = config[watcher_name].get("button_names")
-    if not ports or button_names is None:
+    button_colors = config[watcher_name].get("button_colors")
+    if not ports or not button_names or button_colors is None:
         logger.error(
             "Ports and button names must be specified in the config file. You can find it here: {}".format(
                 config_dir
@@ -144,6 +146,7 @@ def main():
 
             if 1 <= state <= len(button_names):
                 button_name = button_names[state - 1]
+                button_color = button_colors[state - 1]
                 if state != previous_state:
                     description_input = prompt_description(button_name)
                     description = description_input.strip() if description_input else ""
@@ -152,7 +155,7 @@ def main():
                         f"{button_name}-{description}" if description else button_name
                     )
                 title = current_title or button_name
-                data = {"title": title, "button": button_name}
+                data = {"title": title, "button": button_name, "timeline_color": button_color}
                 if current_description:
                     data["description"] = current_description
                 print_statusline(title)
@@ -167,7 +170,7 @@ def main():
                     blinked = False
             else:
                 title = "No button pressed"
-                data = {"title": title, "button": "none"}
+                data = {"title": title, "button": "none", "timeline_color": "#ffffff"}
                 current_title = title
                 current_description = ""
                 print_statusline(title)
